@@ -12,3 +12,30 @@ debug = true # Adds symbols without slowing down execution
 
 [[bin]]
 name = "day01"
+
+[[bin]]
+name = "day02"
+
+[[bin]]
+name = "day03"
+
+[[bin]]
+name = "day04"
+
+[[bin]]
+name = "day05"
+
+[[bin]]
+name = "day06"
+
+[[bin]]
+name = "day07"
+
+[[bin]]
+name = "day08"
+
+[[bin]]
+name = "day09"
+
+[[bin]]
+name = "day10"
