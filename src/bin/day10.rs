@@ -1,9 +1,13 @@
 use std::str::FromStr;
 
-use anyhow::{Context, Ok, Result, bail};
+use anyhow::{Context, Ok, Result};
 
+#[cfg(feature = "z3")]
+use {
+    anyhow::bail,
+    z3::{ast::Int, Optimize},
+};
 use aoc_2025::input;
-use z3::{Optimize, ast::Int};
 
 #[derive(Debug)]
 struct Machine {
@@ -83,6 +87,7 @@ fn min_presses_to_match_lights(machine: &Machine) -> Result<u16> {
         .context("no solution found")
 }
 
+#[cfg(feature = "z3")]
 fn min_presses_for_joltage(machine: &Machine) -> Result<u64> {
     let opt = Optimize::new();
 
@@ -138,13 +143,20 @@ fn main() -> Result<()> {
     println!("Part 1: {}", part1);
     assert_eq!(part1, 571);
 
-    let part2 = input
-        .iter()
-        .map(min_presses_for_joltage)
-        .sum::<Result<u64>>()?;
+    #[cfg(feature = "z3")]
+    {
+        let part2 = input
+            .iter()
+            .map(min_presses_for_joltage)
+            .sum::<Result<u64>>()?;
 
-    println!("Part 2: {}", part2);
-    assert_eq!(part2, 20869);
+        println!("Part 2: {}", part2);
+        assert_eq!(part2, 20869);
+    }
+    #[cfg(not(feature = "z3"))]
+    {
+        println!("Part 2: disabled due to missing z3 feature");
+    }
 
     Ok(())
 }

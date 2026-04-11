@@ -6,10 +6,13 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.102"
 itertools = "0.14.0"
-z3 = "0.20.0"
+z3 = {version = "0.20.0", optional = true}
 
 [profile.release]
 debug = true # Adds symbols without slowing down execution
+
+[features]
+z3 = ["dep:z3"]
 
 [[bin]]
 name = "day01"
