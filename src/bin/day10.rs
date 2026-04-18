@@ -2,17 +2,18 @@ use std::str::FromStr;
 
 use anyhow::{Context, Ok, Result};
 
+use aoc_2025::input;
 #[cfg(feature = "z3")]
 use {
     anyhow::bail,
-    z3::{ast::Int, Optimize},
+    z3::{Optimize, ast::Int},
 };
-use aoc_2025::input;
 
 #[derive(Debug)]
 struct Machine {
     lights: u16,
     buttons: Vec<Button>,
+    #[allow(dead_code)]
     joltage: Vec<u16>,
 }
 
@@ -27,10 +28,10 @@ impl FromStr for Machine {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut words = s.split_whitespace();
         let lights_str = words.next().context("missing lights string")?;
-        let joltage_str = words.next_back().context("missing jolting string")?;
+        let joltage_str = words.next_back().context("missing joltage string")?;
 
         let lights = lights_str
-            .trim_matches(&['[', ']'])
+            .trim_matches(['[', ']'])
             .bytes()
             .enumerate()
             .fold(
@@ -42,7 +43,7 @@ impl FromStr for Machine {
             .map(|word| {
                 Ok(Button {
                     triggers: word
-                        .trim_matches(&['(', ')'])
+                        .trim_matches(['(', ')'])
                         .split(',')
                         .map(|s| s.parse::<u16>().context("could not parse button"))
                         .collect::<Result<Vec<u16>>>()?,
@@ -51,7 +52,7 @@ impl FromStr for Machine {
             .collect::<Result<Vec<Button>>>()?;
 
         let joltage = joltage_str
-            .trim_matches(&['{', '}'])
+            .trim_matches(['{', '}'])
             .split(',')
             .map(|s| s.parse::<u16>().context("could not parse joltage"))
             .collect::<Result<Vec<u16>>>()?;

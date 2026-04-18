@@ -43,8 +43,6 @@ fn main() -> Result<()> {
         .map(|v| search(v, 12))
         .process_results(|vec| vec.sum())?;
 
-
-
     println!("Part 1: {}", part1);
     assert_eq!(part1, 17087);
     println!("Part 2: {}", part2);

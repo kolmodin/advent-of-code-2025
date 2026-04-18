@@ -246,8 +246,7 @@ fn main() -> Result<()> {
         .tuple_combinations()
         .map(|(a, b)| (Rect::new(a, b), a.area(b)))
         .sorted_unstable_by_key(|&(_, area)| Reverse(area))
-        .filter(|(r, _)| is_rect_only_red_and_green(r, &all_corners, &horizontal, &vertical))
-        .next()
+        .find(|(r, _)| is_rect_only_red_and_green(r, &all_corners, &horizontal, &vertical))
         .context("no rect")?;
 
     println!("Part 2: {}", part2.1);
