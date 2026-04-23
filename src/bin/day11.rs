@@ -1,74 +1,80 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
 use anyhow::{Context, Result};
 use aoc_2025::input;
 
-type Edegs = (String, Vec<String>);
-
-fn parse_line(ln: &str) -> Result<Edegs> {
+fn parse_line(ln: &str) -> Result<(&str, Vec<&str>)> {
     let (src, rest) = ln
         .split_once(": ")
         .context("invalid input, could not find :")?;
-    let dests: Vec<String> = rest
-        .split_ascii_whitespace()
-        .map(|d| d.to_string())
-        .collect();
-
-    Ok((src.to_string(), dests))
+    Ok((src, rest.split_ascii_whitespace().collect()))
 }
 
-fn count_paths(
-    src: &str,
-    dst: &str,
-    edges: &HashMap<String, Vec<String>>,
-    cache: &mut HashMap<String, usize>,
-) -> Result<usize> {
-    if src == dst {
-        return Ok(1);
+struct PathCounter<'a> {
+    edges: HashMap<&'a str, Vec<&'a str>>,
+    cache: HashMap<(&'a str, &'a str), usize>,
+}
+
+impl<'a> PathCounter<'a> {
+    fn new(edges: HashMap<&'a str, Vec<&'a str>>) -> Self {
+        Self {
+            edges,
+            cache: HashMap::new(),
+        }
     }
 
-    if src == "out" {
-        return Ok(0);
+    fn count_paths(&mut self, src: &'a str, dst: &'a str) -> usize {
+        if src == dst {
+            return 1;
+        }
+
+        if let Some(count) = self.cache.get(&(src, dst)) {
+            return *count;
+        }
+
+        let neighbours = self.edges.get(src).cloned().unwrap_or(vec![]);
+
+        let count = neighbours
+            .into_iter()
+            .map(|n| self.count_paths(n, dst))
+            .sum::<usize>();
+
+        self.cache.insert((src, dst), count);
+
+        count
     }
-
-    if let Some(count) = cache.get(src) {
-        return Ok(*count);
-    }
-
-    let neighbours = edges
-        .get(src)
-        .with_context(|| format!("could not find node '{}'", src))?;
-
-    let count = neighbours
-        .iter()
-        .map(|n| count_paths(n, dst, edges, cache))
-        .sum::<Result<usize>>()?;
-
-    cache.insert(src.to_string(), count);
-
-    Ok(count)
 }
 
 fn main() -> Result<()> {
-    let input = input::read_input_day(11)?
+    let raw = input::read_input_day(11)?;
+    let input = raw
         .lines()
         .map(parse_line)
-        .collect::<Result<HashMap<String, Vec<String>>>>()?;
+        .collect::<Result<HashMap<&str, Vec<&str>>>>()?;
 
-    let part1 = count_paths("you", "out", &input, &mut HashMap::new())?;
+    let mut pc = PathCounter::new(input);
+    let part1 = pc.count_paths("you", "out");
     println!("Part 1: {}", part1);
     assert_eq!(part1, 534);
 
     let part2 = {
-        let fft = count_paths("svr", "fft", &input, &mut HashMap::new())?;
-        let dac = count_paths("fft", "dac", &input, &mut HashMap::new())?;
-        let out = count_paths("dac", "out", &input, &mut HashMap::new())?;
+        // Two routes from svr to out, each passing through fft and dac in opposite orders:
+        //   Route A: svr ->..-> fft ->..-> dac ->..-> out
+        //   Route B: svr ->..-> dac ->..-> fft ->..-> out
+        // The total path count for each route is the product of paths per segment
+        // (segments are independent), and the two routes are summed.
+        let svr_to_fft = pc.count_paths("svr", "fft");
+        let fft_to_dac = pc.count_paths("fft", "dac");
+        let dac_to_out = pc.count_paths("dac", "out");
 
-        let dac2 = count_paths("svr", "dac", &input, &mut HashMap::new())?;
-        let fft2 = count_paths("dac", "fft", &input, &mut HashMap::new())?;
-        let out2 = count_paths("fft", "out", &input, &mut HashMap::new())?;
+        let svr_to_dac = pc.count_paths("svr", "dac");
+        let dac_to_fft = pc.count_paths("dac", "fft");
+        let fft_to_out = pc.count_paths("fft", "out");
 
-        fft * dac * out + fft2 * dac2 * out2
+        let route_a = svr_to_fft * fft_to_dac * dac_to_out;
+        let route_b = svr_to_dac * dac_to_fft * fft_to_out;
+
+        route_a + route_b
     };
 
     println!("Part 2: {}", part2);
